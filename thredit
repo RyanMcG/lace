@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# Quote arguments if more than one is given.
+CMD="$@"
+if [ "$#" -gt 1 ]; then
+	CMD="'$CMD'"
+fi
+
+INPUT=$(cat)
+
+declare -a LINES
+BEFORE_COUNT=0
+
+while read -r line ; do
+	LINES[BEFORE_COUNT]="$line"
+	BEFORE_COUNT=$((BEFORE_COUNT+1))
+done <<< "$INPUT"
+
+while read -r line ; do
+	args=($CMD $line)
+	echo ${args[@]}
+done <<< "$INPUT" | vipe | \
+	{
+		AFTER_COUNT=0
+		while read -a tokens ; do
+			if [ $AFTER_COUNT -eq $BEFORE_COUNT ] ; then
+				echo -n "Started with $BEFORE_COUNT line"
+				if [ "$BEFORE_COUNT" -ne 1 ] ; then
+					echo -n "s"
+				fi
+				echo " but ended with more."
+				exit 2
+			fi
+
+			echo -n "${tokens[0]} ${LINES[AFTER_COUNT]}"
+			unset tokens[0]
+			REMAINDER="${tokens[@]}"
+			if [ ${#REMAINDER} -gt 0 ] ; then
+				echo -n " $REMAINDER"
+			fi
+			echo
+			AFTER_COUNT=$((AFTER_COUNT+1))
+		done
+
+		if [ "$BEFORE_COUNT" -ne "$AFTER_COUNT" ] ; then
+			echo -n "Started with $BEFORE_COUNT line"
+			if [ "$BEFORE_COUNT" -ne 1 ] ; then
+				echo -n "s"
+			fi
+			echo " but ended with $AFTER_COUNT."
+			exit 1
+		fi
+	}
