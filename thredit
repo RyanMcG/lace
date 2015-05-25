@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Quote arguments if more than one is given.
 CMD="$@"
 if [ "$#" -gt 1 ]; then
