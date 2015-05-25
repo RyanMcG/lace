@@ -18,10 +18,22 @@ while read -r line ; do
 	BEFORE_COUNT=$((BEFORE_COUNT+1))
 done <<< "$INPUT"
 
+edit () {
+	TEMPFILE=$(mktemp /tmp/thredit.XXXXXXXX)
+	cat > $TEMPFILE
+	$EDITOR $TEMPFILE
+	if [ $? -ne 0 ] ; then
+		echo "$EDITOR exited non-zero"
+		exit $RET
+	fi
+	cat $TEMPFILE
+	rm $TEMPFILE
+}
+
 while read -r line ; do
 	args=($CMD $line)
 	echo ${args[@]}
-done <<< "$INPUT" | vipe | \
+done <<< "$INPUT" | edit | \
 	{
 		AFTER_COUNT=0
 		while read -a tokens ; do
